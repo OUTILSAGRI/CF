@@ -1,7 +1,7 @@
 {
   "name": "CF",
   "short_name": "CF",
-  "start_url": "CF.html",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#f4f7f5",
   "theme_color": "#6fae4e",
