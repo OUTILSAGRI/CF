@@ -1,7 +1,7 @@
 const CACHE_NAME = 'cf-pwa-v1';
 const urlsToCache = [
   './',
-  './CF.html', // Mets ici le vrai nom de ton fichier HTML !
+  './index.html', // Mets ici le vrai nom de ton fichier HTML !
   './manifest.json',
   './icon-192x192.png',
   './icon-512x512.png'
