@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Calculateur de Besoins en Semences de Prairies</title>
+<link href="https://fonts.googleapis.com/css?family=Montserrat:400,600,700&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#6fae4e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+:root {
+    --vert-fonce: #365436;
+    --vert-clair: #6fae4e;
+    --orange: #e57428;
+    --gris-fond: #f4f7f5;
+    --font-principale: 'Montserrat', Arial, sans-serif;
+}
+
+/* Taille de police responsive */
+html {
+    font-size: clamp(13px, 2.5vw, 17px);
+}
+
+body {
+    font-family: var(--font-principale);
+    background: var(--gris-fond);
+    color: var(--vert-fonce);
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+    overflow-x: auto;
+}
+
+h1 {
+    background: linear-gradient(90deg, var(--vert-fonce) 70%, var(--vert-clair) 100%);
+    color: white;
+    padding: clamp(16px, 4vw, 30px) 0 clamp(8px, 2vw, 20px);
+    margin-bottom: 0;
+    box-shadow: 0 4px 14px rgba(54,84,54,0.08);
+    font-size: clamp(1.2rem, 4vw, 2rem);
+    text-align: center;
+    word-break: break-word;
+    font-family: var(--font-principale);
+    letter-spacing: 1px;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-top: 0;
+}
+
+h2 {
+    border-left: 6px solid var(--orange);
+    padding-left: clamp(6px, 2vw, 16px);
+    margin-bottom: 2vw;
+    color: var(--vert-fonce);
+    font-size: clamp(1rem, 2.5vw, 1.3rem);
+    word-break: break-word;
+    font-family: var(--font-principale);
+    letter-spacing: 1px;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-top: 0;
+}
+
+.container,
+#recapitulatif-semis,
+#besoins-produits,
+#cout-total {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(54,84,54,0.08);
+    padding: clamp(10px, 4vw, 24px) clamp(4px, 3vw, 18px);
+    margin: 2vw auto 10px;
+    max-width: 540px;
+    width: 98vw;
+    box-sizing: border-box;
+}
+
+/* Espacement harmonieux entre les champs des formulaires */
+.form-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Séparation visuelle des produits dans le mélange */
+.melange-produit {
+    margin-bottom: 14px;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed #b6e5a6;
+}
+
+/* Espacement entre les blocs principaux */
+.container > div,
+.container > .calcul-unique,
+.container > .calcul-melange {
+    margin-bottom: 16px;
+}
+
+/* Labels et champs bien alignés et espacés */
+label {
+    font-weight: 600;
+    color: var(--vert-fonce);
+    display: block;
+    margin: 0 0 4px 0;
+    font-size: clamp(0.97rem, 1.8vw, 1.1rem);
+}
+
+input[type="number"],
+input[type="text"] {
+    width: 100%;
+    padding: clamp(7px, 2vw, 14px);
+    border: 2px solid var(--vert-clair);
+    border-radius: 5px;
+    font-size: clamp(0.99em, 1.8vw, 1.08em);
+    font-family: var(--font-principale);
+    background: #f7fff6;
+    margin-bottom: 6px;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+input:focus {
+    border-color: var(--orange);
+    outline: none;
+}
+
+.suggestions-list {
+    border: none !important;
+}
+.suggestions-list div {
+    padding: 10px 12px;
+    cursor: pointer;
+    color: var(--vert-fonce);
+    font-family: var(--font-principale);
+}
+.suggestions-list div:hover {
+    background: var(--vert-clair);
+    color: white;
+}
+
+.autocomplete-container {
+    position: relative;
+    width: 100%;
+}
+
+/* --- Styles des boutons modern-button --- */
+button.modern-button {
+    background: var(--vert-clair);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-family: var(--font-principale);
+    font-size: clamp(0.92em, 1.8vw, 1.05em);
+    font-weight: 600;
+    padding: clamp(10px, 3vw, 14px) 0;
+    margin: clamp(7px, 2vw, 12px) 0 clamp(5px, 1.5vw, 8px) 0;
+    box-shadow: 0 2px 8px rgba(54,84,54,0.08);
+    transition: background 0.2s, transform 0.15s;
+    cursor: pointer;
+    width: 100%;
+    max-width: none;
+    display: block;
+}
+
+button.modern-button:hover {
+    background: var(--orange);
+    color: #fff;
+    transform: translateY(-2px) scale(1.035);
+}
+
+button.modern-button.reset-button {
+    background: var(--orange);
+}
+button.modern-button.reset-button:hover {
+    background: #b85712;
+}
+button.modern-button.add-button {
+    background: var(--vert-fonce);
+}
+button.modern-button.add-button:hover {
+    background: #4b945a;
+}
+button.danger-button {
+    background: #c82333 !important;
+}
+button.danger-button:hover {
+    background: #a21d28 !important;
+}
+
+.supprimer-produit,
+.supprimer-recap {
+    font-size: 1em;
+    padding: 10px 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* --- FIN Styles boutons --- */
+
+.recap-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: clamp(4px, 1vw, 10px);
+    margin-bottom: clamp(7px, 2vw, 12px);
+    padding-bottom: clamp(4px, 1vw, 7px);
+    border-bottom: 1px solid #d7e4d2;
+}
+.recap-produit, .recap-melange, .recap-surface, .recap-cout {
+    width: 100%;
+    min-width: auto;
+    font-size: 1em;
+}
+.recap-cout {
+    font-weight: bold;
+    color: var(--vert-clair);
+}
+.prix-modifiable {
+    width: clamp(56px, 18vw, 90px);
+    padding: clamp(3px, 1.5vw, 7px);
+    border: 1.5px solid var(--vert-clair);
+    border-radius: 5px;
+    margin-left: 6px;
+    background: #f7fff6;
+    font-size: clamp(0.95em, 1.7vw, 1em);
+}
+.prix-modifiable-container {
+    display: flex;
+    align-items: center;
+    margin-left: 0;
+    margin-top: 4px;
+    font-size: 0.98em;
+}
+.recap-buttons {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+}
+.recap-buttons .modern-button {
+    width: 100%;
+    margin: 5px 0;
+}
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none;
+  margin: 0; 
+}
+input[type=number] {
+    -moz-appearance: textfield;
+}
+input, button {
+    touch-action: manipulation;
+}
+
+/* Responsivité supplémentaire petits écrans */
+@media (max-width: 600px) {
+    .container,
+    #recapitulatif-semis,
+    #besoins-produits,
+    #cout-total {
+        max-width: 99vw;
+        border-radius: 7px;
+        padding: 4vw 2vw;
+        margin: 2vw auto 2vw;
+    }
+    h1 {
+        font-size: 1.1rem;
+        padding: 3vw 0 2vw 0;
+    }
+    h2 {
+        font-size: 0.97rem;
+        padding-left: 2vw;
+    }
+    .prix-modifiable { width: 52px; }
+    .melange-produit {
+        margin-bottom: 10px;
+        padding-bottom: 4px;
+    }
+    .form-controls {
+        gap: 8px;
+    }
+}
+
+@media (max-width: 400px) {
+    h1, h2 {
+        font-size: 1rem;
+    }
+    .container,
+    #recapitulatif-semis,
+    #besoins-produits,
+    #cout-total {
+        padding: 2vw 1vw;
+    }
+}
+
+@media (max-width: 350px) {
+    button.modern-button {
+        padding: 7px 0;
+        font-size: 0.88em;
+    }
+}
+    </style>
+</head>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('service-worker.js');
+  });
+}
+</script>
+<body>
+<h1>Calculateur de Besoins en Semences</h1>
+<div class="container">
+    <div class="calcul-unique">
+        <h2>Calcul avec un seul produit</h2>
+        <label for="produit-unique">Produit:</label>
+        <div class="autocomplete-container">
+            <input id="produit-unique" type="text" placeholder="Commencez à taper le nom d'un produit..." autocomplete="off" />
+            <div id="suggestions-unique" class="suggestions-list"></div>
+        </div>
+        <div class="produit-info" id="info-produit-unique" style="display: none;">
+            <div class="poids-sac-info">
+                <div>Poids du sac:</div>
+                <span id="poids-sac-unique"></span> kg
+            </div>
+            <div class="prix-sac">
+                <div>Prix du sac:</div>
+                <input id="prix-sac-unique" min="0" placeholder="Prix €/sac" step="0.01" type="number"/> €
+            </div>
+        </div>
+        <label for="dose-unique">Dose (kg/ha):</label>
+        <input id="dose-unique" min="0" step="0.1" type="number"/>
+        <div class="form-controls">
+            <label for="surface-unique">Surface (ha):</label>
+            <input id="surface-unique" min="0.01" step="0.01" type="number" value="1"/>
+            <button class="modern-button" onclick="calculerBesoinUnique()" type="button">Calculer le Besoin</button>
+            <button class="modern-button reset-button" onclick="reinitialiserCalculUnique()" type="button">Réinitialiser</button>
+        </div>
+    </div>
+    <div class="calcul-melange">
+        <h2>Mélange de plusieurs produits</h2>
+        <div id="melange-container">
+            <div class="melange-produit">
+                <div>
+                    <label for="produit-melange-1">Produit 1:</label>
+                    <div class="autocomplete-container">
+                        <input class="produit-melange" data-index="1" id="produit-melange-1" type="text" placeholder="Commencez à taper le nom d'un produit..." autocomplete="off" />
+                        <div id="suggestions-melange-1" class="suggestions-list"></div>
+                    </div>
+                    <div class="produit-info" id="info-produit-melange-1" style="display: none;">
+                        <div class="poids-sac-info">
+                            <div>Poids du sac:</div>
+                            <span class="poids-sac-melange"></span> kg
+                        </div>
+                        <div class="prix-sac">
+                            <div>Prix du sac:</div>
+                            <input class="prix-sac-melange" data-index="1" min="0" placeholder="Prix €/sac" step="0.01" type="number"/> €
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label for="dose-melange-1">Dose (kg/ha):</label>
+                    <input class="dose-melange" data-index="1" id="dose-melange-1" min="0" step="0.1" type="number" value="0"/>
+                </div>
+                <div>
+                    <button class="supprimer-produit modern-button" data-index="1" type="button">Supprimer</button>
+                </div>
+            </div>
+        </div>
+        <div class="add-button-container">
+            <button class="modern-button add-button" id="ajouter-produit-melange" type="button">Ajouter un produit au mélange</button>
+            <button class="modern-button reset-button" onclick="reinitialiserMelange()" type="button">Réinitialiser le mélange</button>
+        </div>
+        <div class="form-controls">
+            <label for="surface-melange">Surface (ha):</label>
+            <input id="surface-melange" min="0.01" step="0.01" type="number" value="1"/>
+            <button class="modern-button" onclick="calculerBesoinMelange()" type="button">Calculer le Besoin</button>
+        </div>
+    </div>
+</div>
+<div id="recapitulatif-semis">
+    <h2>Récapitulatif des Intentions de Semis</h2>
+    <div class="recap-header">
+        <div class="tc-select-container">
+            <label for="tc-select">TC</label>
+            <select id="tc-select">
+                <option value="">-- Sélectionnez --</option>
+                <option value="ANGLEYS Mathias">ANGLEYS Mathias</option>
+                <option value="BAYAR Mustapha">BAYAR Mustapha</option>
+                <option value="DELSUC Olivier">DELSUC Olivier</option>
+                <option value="GUIBERT Blandine">GUIBERT Blandine</option>
+                <option value="LEYE Saliou">LEYE Saliou</option>
+                <option value="PLAS Philippe">PLAS Philippe</option>
+                <option value="TRICAUD Florent">TRICAUD Florent</option>
+            </select>
+        </div>
+        <div class="tc-select-container">
+            <label for="exploitation-input">NOM DE L'EXPLOITATION</label>
+            <input id="exploitation-input" placeholder="Nom de la ferme" type="text"/>
+        </div>
+        <div class="recap-buttons">
+            <button class="modern-button reset-button" onclick="reinitialiserRecapitulatif()">Réinitialiser</button>
+            <button class="modern-button" onclick="exporterRecapitulatif()">Exporter en PDF</button>
+        </div>
+    </div>
+    <div id="recap-content"></div>
+</div>
+<div id="besoins-produits">
+    <h2>Besoins en Produits</h2>
+    <div id="besoins-content"></div>
+</div>
+<div id="cout-total">
+    <h2>Coût Total</h2>
+    <div id="cout-content"></div>
+</div>
+<script>
+    const { jsPDF } = window.jspdf;
+    const dataProduits = [
+        { nom: "ACAPULCO", poidsSac: 15 },
+        { nom: "AUSTRAL", poidsSac: 10 },
+        { nom: "CYRIUS", poidsSac: 10 },
+        { nom: "DÉROBÉES PROTÉINES 3", poidsSac: 15 },
+        { nom: "F. DES PRÉS PREVAL/COSMOPOLITAIN", poidsSac: 10 },
+        { nom: "F.ELEVEE ROSPARON", poidsSac: 10 },
+        { nom: "FANTASIA/SANTA", poidsSac: 15 },
+        { nom: "FLORIUS", poidsSac: 10 },
+        { nom: "GENERIQUE (RGI)", poidsSac: 10 },
+        { nom: "GENERIQUE 4n FABIO", poidsSac: 25 },
+        { nom: "IBIZAL", poidsSac: 10 },
+        { nom: "IMPERIO", poidsSac: 10 },
+        { nom: "LIDMETHA 20", poidsSac: 15 },
+        { nom: "LUXURY 3A", poidsSac: 15 },
+        { nom: "LUXURY AZOMAX", poidsSac: 10 },
+        { nom: "LUXURY TERRES FRANCHES", poidsSac: 15 },
+        { nom: "LUXURY TERRES SECHANTES", poidsSac: 15 },
+        { nom: "MAJESTY", poidsSac: 10 },
+        { nom: "M-ESTIVAL", poidsSac: 25 },
+        { nom: "M-VALO/PROTE HIVERNAAL", poidsSac: 15 },
+        { nom: "MÉLANGE ATLAS", poidsSac: 15 },
+        { nom: "MÉLANGE DOMINGO", poidsSac: 15 },
+        { nom: "MÉLANGE PPL", poidsSac: 15 },
+        { nom: "MÉLANGE VICKING", poidsSac: 15 },
+        { nom: "MOHA SC", poidsSac: 25 },
+        { nom: "MOUTARDE BLANCHE", poidsSac: 25 },
+        { nom: "MOUTARDE BRUNE MINARET", poidsSac: 10 },
+        { nom: "NOCULUM LUZERNE UAB", poidsSac: 1 },
+        { nom: "PALMATA", poidsSac: 10 },
+        { nom: "PIROL", poidsSac: 10 },
+        { nom: "PONCHO", poidsSac: 15 },
+        { nom: "PRESTO", poidsSac: 10 },
+        { nom: "RGA MELIPRE ARMORIK", poidsSac: 15 },
+        { nom: "RINGO/REBOUND", poidsSac: 10 },
+        { nom: "ROULON", poidsSac: 10 },
+        { nom: "SMART", poidsSac: 15 },
+        { nom: "TAMPICO", poidsSac: 10 },
+        { nom: "TONUSS", poidsSac: 15 },
+        { nom: "TRÈFLE BLANC INTERMÉDIAIRE GABBY/MELITAL", poidsSac: 5 },
+        { nom: "TRÈFLE D'ALEXANDRIE", poidsSac: 25 },
+        { nom: "TRÈFLE INCARNAT GÉNÉRIQUE (10 kg)", poidsSac: 10 },
+        { nom: "TRÈFLE INCARNAT GÉNÉRIQUE (25 kg)", poidsSac: 25 },
+        { nom: "TRÈFLE VIOLET SECRETARIAT", poidsSac: 10 },
+        { nom: "TRÈFLE VIOLET GÉNÉRIQUE (10 kg)", poidsSac: 10 },
+        { nom: "TRÈFLE VIOLET GÉNÉRIQUE (25 kg)", poidsSac: 25 }
+    ];
+
+    let melangeProduitCount = 1;
+    let besoinsTotaux = {};
+    let coutsTotaux = {};
+    let calculsHistorique = [];
+
+    function setupAutocomplete(inputId, suggestionsId) {
+        const input = document.getElementById(inputId);
+        const suggestions = document.getElementById(suggestionsId);
+
+        input.addEventListener("input", function() {
+            const value = this.value.trim().toLowerCase();
+            suggestions.innerHTML = "";
+            if (!value) return;
+            const matches = dataProduits.filter(p => p.nom.toLowerCase().includes(value));
+            matches.forEach(prod => {
+                const div = document.createElement("div");
+                div.textContent = prod.nom;
+                div.onclick = function() {
+                    input.value = prod.nom;
+                    suggestions.innerHTML = "";
+                    if (inputId === "produit-unique") {
+                        afficherInfoProduit(input, "info-produit-unique");
+                    } else if (inputId.startsWith("produit-melange-")) {
+                        const idx = inputId.split("-").pop();
+                        afficherInfoProduit(input, "info-produit-melange-" + idx);
+                    }
+                };
+                suggestions.appendChild(div);
+            });
+        });
+
+        document.addEventListener("click", function(e) {
+            if (!input.contains(e.target) && !suggestions.contains(e.target)) {
+                suggestions.innerHTML = "";
+            }
+        });
+    }
+
+    function afficherInfoProduit(inputElement, infoDivId) {
+        const value = inputElement.value;
+        const produit = dataProduits.find(p => p.nom === value);
+        const infoDiv = document.getElementById(infoDivId);
+
+        if (produit) {
+            infoDiv.style.display = 'block';
+            if (infoDivId === "info-produit-unique") {
+                document.getElementById("poids-sac-unique").textContent = produit.poidsSac;
+            } else {
+                const poidsSacSpan = infoDiv.querySelector('.poids-sac-melange');
+                if (poidsSacSpan) poidsSacSpan.textContent = produit.poidsSac;
+            }
+            const prixInput = infoDiv.querySelector('input[type="number"]');
+            if (prixInput) prixInput.value = '';
+        } else {
+            infoDiv.style.display = 'none';
+        }
+    }
+
+    function supprimerProduitMelange(index) {
+        const produits = document.querySelectorAll('.melange-produit');
+        produits.forEach(produit => {
+            if (
+                produit.querySelector(`[data-index="${index}"]`) ||
+                produit.querySelector(`#produit-melange-${index}`)
+            ) {
+                produit.remove();
+                actualiserNumerotationProduits();
+            }
+        });
+    }
+
+    function supprimerRecapitulatif(id) {
+        const element = document.querySelector(`[data-recap-id="${id}"]`);
+        if (element) {
+            element.remove();
+            calculsHistorique = calculsHistorique.filter(item => item.id !== id);
+            recalculerBesoinsTotaux();
+            afficherBesoinsProduits();
+        }
+    }
+
+    function calculerNombreSacs(besoinTotalKg, poidsSac) {
+        if (poidsSac === 0) return 'N/A';
+        return Math.ceil(besoinTotalKg / poidsSac);
+    }
+
+    function calculerCoutHa(calcul) {
+        let coutHa = 0;
+        if (calcul.type === 'unique') {
+            if (calcul.prixSac) {
+                const produitInfo = dataProduits.find(p => p.nom === calcul.produit);
+                if (produitInfo && produitInfo.poidsSac > 0) {
+                    coutHa = (calcul.prixSac * calcul.dose) / produitInfo.poidsSac;
+                }
+            }
+        } else if (calcul.type === 'melange') {
+            calcul.produits.forEach(produit => {
+                if (produit.prixSac) {
+                    const produitInfo = dataProduits.find(p => p.nom === produit.nom);
+                    if (produitInfo && produitInfo.poidsSac > 0) {
+                        coutHa += (produit.prixSac * produit.dose) / produitInfo.poidsSac;
+                    }
+                }
+            });
+        }
+        return coutHa;
+    }
+
+    function recalculerBesoinsTotaux() {
+        besoinsTotaux = {};
+        coutsTotaux = {};
+        calculsHistorique.forEach(calcul => {
+            if (calcul.type === 'unique') {
+                const besoinTotalKg = calcul.surface * calcul.dose;
+                const produitInfo = dataProduits.find(p => p.nom === calcul.produit);
+                if (produitInfo) {
+                    const poidsSac = produitInfo.poidsSac;
+                    const nombreSacs = Math.ceil(besoinTotalKg / poidsSac);
+                    const coutTotal = nombreSacs * (calcul.prixSac || 0);
+                    besoinsTotaux[produitInfo.nom] = (besoinsTotaux[produitInfo.nom] || 0) + besoinTotalKg;
+                    coutsTotaux[produitInfo.nom] = (coutsTotaux[produitInfo.nom] || 0) + coutTotal;
+                }
+            } else if (calcul.type === 'melange') {
+                calcul.produits.forEach(produit => {
+                    const produitInfo = dataProduits.find(p => p.nom === produit.nom);
+                    if (produitInfo) {
+                        const besoinTotalKg = calcul.surface * produit.dose;
+                        const poidsSac = produitInfo.poidsSac;
+                        const nombreSacs = Math.ceil(besoinTotalKg / poidsSac);
+                        const coutTotal = nombreSacs * (produit.prixSac || 0);
+                        besoinsTotaux[produit.nom] = (besoinsTotaux[produit.nom] || 0) + besoinTotalKg;
+                        coutsTotaux[produit.nom] = (coutsTotaux[produit.nom] || 0) + coutTotal;
+                    }
+                });
+            }
+        });
+    }
+
+    function afficherBesoinsProduits() {
+        recalculerBesoinsTotaux();
+        const besoinsContent = document.getElementById('besoins-content');
+        const coutContent = document.getElementById('cout-content');
+        besoinsContent.innerHTML = '';
+        let totalGeneral = 0;
+
+        for (const produit in besoinsTotaux) {
+            const produitInfo = dataProduits.find(p => p.nom === produit);
+            if (produitInfo) {
+                const besoinTotal = besoinsTotaux[produit];
+                const poidsSac = produitInfo.poidsSac;
+                const nombreSacs = Math.ceil(besoinTotal / poidsSac);
+                const coutTotal = coutsTotaux[produit] || 0;
+                const resteKg = poidsSac - (besoinTotal % poidsSac);
+
+                const produitDiv = document.createElement('div');
+                produitDiv.className = 'produit-info';
+                produitDiv.innerHTML = `
+                    <strong>${produit}:</strong> 
+                    ${nombreSacs} sac(s) de ${poidsSac} kg (besoin réel: ${besoinTotal.toFixed(2)} kg)
+                    <span class="cout-info">Coût: ${coutTotal.toFixed(2)} €</span>
+                    <div class="reste-info">
+                        ${resteKg === poidsSac ? 'Sac entier utilisé' : `Reste: ${resteKg.toFixed(2)} kg avant sac supplémentaire`}
+                    </div>
+                `;
+                besoinsContent.appendChild(produitDiv);
+                totalGeneral += coutTotal;
+            }
+        }
+        coutContent.innerHTML = `
+            <div class="total-row">
+                <strong>Coût Total Estimé (par sacs complets):</strong> ${totalGeneral.toFixed(2)} €
+            </div>
+        `;
+    }
+
+    function ajouterRecapitulatif(calcul) {
+        const recapContent = document.getElementById('recap-content');
+        const recapDiv = document.createElement("div");
+        recapDiv.className = "produit-info";
+        recapDiv.dataset.recapId = calcul.id;
+        recapDiv.dataset.mode = "view";
+        const coutHa = calculerCoutHa(calcul);
+
+        if (calcul.type === 'unique') {
+            recapDiv.innerHTML = `
+                <div class="recap-row">
+                    <div class="recap-produit">
+                        <strong>${calcul.produit}</strong> - 
+                        Dose: <input type="number" class="dose-modifiable" data-type="unique" data-id="${calcul.id}" value="${calcul.dose}" step="0.1"> kg/ha
+                        <div class="prix-modifiable-container">
+                            Prix: <input type="number" class="prix-modifiable" data-type="unique" data-id="${calcul.id}" value="${calcul.prixSac || ''}" step="0.01" placeholder="Prix €"> €/sac
+                        </div>
+                    </div>
+                    <div class="recap-surface">Surface: ${calcul.surface} ha</div>
+                    <div class="recap-cout">Coût/ha: ${coutHa.toFixed(2)} €</div>
+                    <button class="supprimer-recap modern-button danger-button" onclick="supprimerRecapitulatif('${calcul.id}')">Supprimer</button>
+                </div>
+            `;
+        } else {
+            let melangeDetails = `<strong>Mélange:</strong> `;
+            calcul.produits.forEach((produit, index) => {
+                melangeDetails += `
+                    ${produit.nom} (${produit.dose} kg/ha)
+                    <div class="prix-modifiable-container">
+                        Prix: <input type="number" class="prix-modifiable" data-type="melange" data-id="${calcul.id}" data-produit="${produit.nom}" 
+                               value="${produit.prixSac || ''}" step="0.01" placeholder="Prix €"> €/sac
+                    </div>
+                `;
+                if (index < calcul.produits.length - 1) melangeDetails += ` + `;
+            });
+            recapDiv.innerHTML = `
+                <div class="recap-row">
+                    <div class="recap-melange">
+                        ${melangeDetails}
+                    </div>
+                    <div class="recap-surface">Surface: ${calcul.surface} ha</div>
+                    <div class="recap-cout">Coût/ha: ${coutHa.toFixed(2)} €</div>
+                    <button class="modern-button" onclick="basculerModeMelange('${calcul.id}', true)">Modifier doses</button>
+                    <button class="supprimer-recap modern-button danger-button" onclick="supprimerRecapitulatif('${calcul.id}')">Supprimer</button>
+                </div>
+            `;
+        }
+        recapContent.appendChild(recapDiv);
+        attacherListenersModifications();
+    }
+
+    function basculerModeMelange(id, forceEdit = false) {
+        const recapDiv = document.querySelector(`[data-recap-id="${id}"]`);
+        if (!recapDiv) return;
+        const mode = forceEdit ? "edit" : recapDiv.dataset.mode === "edit" ? "view" : "edit";
+        recapDiv.dataset.mode = mode;
+        const calcul = calculsHistorique.find(c => c.id === id);
+        if (!calcul) return;
+        if (mode === "edit") {
+            recapDiv.remove();
+            const newRecapDiv = document.createElement("div");
+            newRecapDiv.className = "produit-info";
+            newRecapDiv.dataset.recapId = id;
+            newRecapDiv.dataset.mode = "edit";
+            let melangeDetails = `<strong>Mélange:</strong> `;
+            calcul.produits.forEach((produit, index) => {
+                melangeDetails += `
+                    ${produit.nom} 
+                    <input type="number" class="dose-modifiable" data-type="melange" data-id="${id}" 
+                           data-produit="${produit.nom}" value="${produit.dose}" step="0.1"> kg/ha
+                `;
+                if (index < calcul.produits.length - 1) melangeDetails += ` + `;
+            });
+            newRecapDiv.innerHTML = `
+                <p>${melangeDetails}</p>
+                <button class="modern-button valider-melange" onclick="validerMelange('${id}')">Valider</button>
+                <button class="modern-button annuler-melange" onclick="basculerModeMelange('${id}')">Annuler</button>
+                <button class="supprimer-recap modern-button" onclick="supprimerRecapitulatif('${id}')">Supprimer</button>
+            `;
+            document.getElementById('recap-content').appendChild(newRecapDiv);
+            attacherListenersModifications();
+        } else {
+            recapDiv.remove();
+            ajouterRecapitulatif(calcul);
+        }
+    }
+
+    function validerMelange(id) {
+        const recapDiv = document.querySelector(`[data-recap-id="${id}"]`);
+        if (!recapDiv) return;
+        const calcul = calculsHistorique.find(c => c.id === id);
+        if (!calcul) return;
+        recapDiv.querySelectorAll('.dose-modifiable').forEach(input => {
+            const produitNom = input.dataset.produit;
+            const newDose = parseFloat(input.value) || 0;
+            const produit = calcul.produits.find(p => p.nom === produitNom);
+            if (produit) produit.dose = newDose;
+        });
+        recapDiv.remove();
+        ajouterRecapitulatif(calcul);
+        afficherBesoinsProduits();
+    }
+
+    function calculerBesoinUnique() {
+        const produit = document.getElementById("produit-unique").value;
+        const dose = parseFloat(document.getElementById("dose-unique").value);
+        const surface = parseFloat(document.getElementById("surface-unique").value);
+        const prixSac = parseFloat(document.getElementById("prix-sac-unique").value) || 0;
+
+        if (!produit || isNaN(dose) || isNaN(surface)) {
+            alert("Veuillez remplir tous les champs.");
+            return;
+        }
+        const produitInfo = dataProduits.find(p => p.nom === produit);
+        if (!produitInfo) {
+            alert("Produit inconnu. Choisissez dans la liste suggérée.");
+            return;
+        }
+        const id = `unique-${Date.now()}`;
+        const calcul = {
+            id: id,
+            type: 'unique',
+            produit: produit,
+            dose: dose,
+            surface: surface,
+            prixSac: prixSac
+        };
+        calculsHistorique.push(calcul);
+        ajouterRecapitulatif(calcul);
+        afficherBesoinsProduits();
+    }
+
+    function calculerBesoinMelange() {
+        const surface = parseFloat(document.getElementById("surface-melange").value);
+        if (isNaN(surface)) {
+            alert("Veuillez entrer une surface valide.");
+            return;
+        }
+        let produits = [];
+        let hasError = false;
+        document.querySelectorAll('.melange-produit').forEach(melangeProduit => {
+            const produitInput = melangeProduit.querySelector('.produit-melange');
+            const produit = produitInput.value;
+            const dose = parseFloat(melangeProduit.querySelector('.dose-melange').value);
+            const prixSac = parseFloat(melangeProduit.querySelector('.prix-sac-melange').value) || 0;
+            const produitInfo = dataProduits.find(p => p.nom === produit);
+            if (!produit || isNaN(dose) || !produitInfo) {
+                alert("Veuillez remplir tous les champs pour chaque produit du mélange et choisir un produit valide.");
+                hasError = true;
+                return;
+            }
+            produits.push({
+                nom: produit,
+                dose: dose,
+                prixSac: prixSac
+            });
+        });
+        if (hasError) return;
+        const id = `melange-${Date.now()}`;
+        calculsHistorique.push({
+            id: id,
+            type: 'melange',
+            surface: surface,
+            produits: produits
+        });
+        ajouterRecapitulatif({
+            id: id,
+            type: 'melange',
+            surface: surface,
+            produits: produits
+        });
+        afficherBesoinsProduits();
+    }
+
+    function exporterRecapitulatif() {
+        const buttonsToHide = document.querySelectorAll('.modern-button, .supprimer-recap, .supprimer-produit');
+        buttonsToHide.forEach(button => {
+            button.style.display = 'none';
+        });
+        const element1 = document.getElementById('recapitulatif-semis');
+        const element2 = document.getElementById('besoins-produits');
+        const element3 = document.getElementById('cout-total');
+        const options = { scale: 2, logging: false, useCORS: true };
+        Promise.all([
+            html2canvas(element1, options),
+            html2canvas(element2, options),
+            html2canvas(element3, options)
+        ]).then(canvases => {
+            const pdf = new jsPDF();
+            let yPosition = 10;
+            pdf.setFontSize(16);
+            pdf.setTextColor(40, 40, 40);
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const textWidth = pdf.getStringUnitWidth("Devis semences de prairies 2025") * pdf.internal.getFontSize() / pdf.internal.scaleFactor;
+            const textX = (pageWidth - textWidth) / 2;
+            pdf.text("Devis semences de prairies 2025", textX, yPosition);
+            yPosition += 15;
+            canvases.forEach(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = pdf.internal.pageSize.getWidth() - 20;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                pdf.addImage(imgData, 'PNG', 10, yPosition, imgWidth, imgHeight);
+                yPosition += imgHeight + 10;
+            });
+            pdf.save('devis_semences_prairies_2025.pdf');
+            buttonsToHide.forEach(button => {
+                button.style.display = '';
+            });
+        }).catch(error => {
+            console.error("Erreur lors de l'export PDF:", error);
+            buttonsToHide.forEach(button => {
+                button.style.display = '';
+            });
+        });
+    }
+
+    function reinitialiserRecapitulatif() {
+        calculsHistorique = [];
+        document.getElementById('recap-content').innerHTML = '';
+        besoinsTotaux = {};
+        coutsTotaux = {};
+        document.getElementById('besoins-content').innerHTML = '';
+        document.getElementById('cout-content').innerHTML = '';
+    }
+
+    function reinitialiserCalculUnique() {
+        document.getElementById("produit-unique").value = '';
+        document.getElementById("dose-unique").value = '';
+        document.getElementById("surface-unique").value = '1';
+        document.getElementById("prix-sac-unique").value = '';
+        document.getElementById("info-produit-unique").style.display = 'none';
+    }
+
+    function reinitialiserMelange() {
+        const produits = document.querySelectorAll('.melange-produit');
+        produits.forEach((produit, index) => {
+            if (index > 0) {
+                produit.remove();
+            } else {
+                const select = produit.querySelector('.produit-melange');
+                const doseInput = produit.querySelector('.dose-melange');
+                const prixSacInput = produit.querySelector('.prix-sac-melange');
+                const infoDiv = produit.querySelector('.produit-info');
+                if (select) select.value = '';
+                if (doseInput) doseInput.value = '0';
+                if (prixSacInput) prixSacInput.value = '';
+                if (infoDiv) infoDiv.style.display = 'none';
+            }
+        });
+        actualiserNumerotationProduits();
+    }
+
+    function actualiserNumerotationProduits() {
+        document.querySelectorAll('.melange-produit').forEach((produit, index) => {
+            const currentIndex = index + 1;
+            const input = produit.querySelector('.produit-melange');
+            const suggestions = produit.querySelector('.suggestions-list');
+            if (input) {
+                input.setAttribute('id', `produit-melange-${currentIndex}`);
+                input.setAttribute('data-index', currentIndex);
+                input.previousElementSibling && input.previousElementSibling.setAttribute('for', `produit-melange-${currentIndex}`);
+                if (suggestions) suggestions.setAttribute('id', `suggestions-melange-${currentIndex}`);
+                setupAutocomplete(`produit-melange-${currentIndex}`, `suggestions-melange-${currentIndex}`);
+            }
+            const doseInput = produit.querySelector('.dose-melange');
+            if (doseInput) {
+                doseInput.setAttribute('id', `dose-melange-${currentIndex}`);
+                doseInput.setAttribute('data-index', currentIndex);
+                doseInput.previousElementSibling && doseInput.previousElementSibling.setAttribute('for', `dose-melange-${currentIndex}`);
+            }
+            const prixSacInput = produit.querySelector('.prix-sac-melange');
+            if (prixSacInput) prixSacInput.setAttribute('data-index', currentIndex);
+            const infoDiv = produit.querySelector('.produit-info');
+            if (infoDiv) infoDiv.setAttribute('id', `info-produit-melange-${currentIndex}`);
+            const supprimerBtn = produit.querySelector('.supprimer-produit');
+            if (supprimerBtn) supprimerBtn.setAttribute('data-index', currentIndex);
+        });
+        melangeProduitCount = document.querySelectorAll('.melange-produit').length;
+    }
+
+    function attacherListenersModifications() {
+        document.querySelectorAll('.dose-modifiable').forEach(input => {
+            input.addEventListener('input', () => {
+                const type = input.dataset.type;
+                const id = input.dataset.id;
+                const newDose = parseFloat(input.value) || 0;
+                if (type === 'unique') {
+                    const obj = calculsHistorique.find(c => c.id === id);
+                    if (obj) {
+                        obj.dose = newDose;
+                        const recapDiv = document.querySelector(`[data-recap-id="${id}"]`);
+                        if (recapDiv) {
+                            const coutHa = calculerCoutHa(obj);
+                            const coutElement = recapDiv.querySelector('.recap-cout');
+                            if (coutElement) {
+                                coutElement.textContent = `Coût/ha: ${coutHa.toFixed(2)} €`;
+                            }
+                        }
+                    }
+                    afficherBesoinsProduits();
+                } else if (type === 'melange') {
+                    const produitNom = input.dataset.produit;
+                    const calcul = calculsHistorique.find(c => c.id === id);
+                    if (calcul) {
+                        const produit = calcul.produits.find(p => p.nom === produitNom);
+                        if (produit) {
+                            produit.dose = newDose;
+                            const recapDiv = document.querySelector(`[data-recap-id="${id}"]`);
+                            if (recapDiv) {
+                                const coutHa = calculerCoutHa(calcul);
+                                const coutElement = recapDiv.querySelector('.recap-cout');
+                                if (coutElement) {
+                                    coutElement.textContent = `Coût/ha: ${coutHa.toFixed(2)} €`;
+                                }
+                            }
+                        }
+                    }
+                    afficherBesoinsProduits();
+                }
+            });
+        });
+        document.querySelectorAll('.prix-modifiable').forEach(input => {
+            input.addEventListener('input', () => {
+                const type = input.dataset.type;
+                const id = input.dataset.id;
+                const newPrix = parseFloat(input.value) || 0;
+                if (type === 'unique') {
+                    const obj = calculsHistorique.find(c => c.id === id);
+                    if (obj) {
+                        obj.prixSac = newPrix;
+                        const coutHa = calculerCoutHa(obj);
+                        const recapDiv = document.querySelector(`[data-recap-id="${id}"]`);
+                        if (recapDiv) {
+                            const coutElement = recapDiv.querySelector('.recap-cout');
+                            if (coutElement) {
+                                coutElement.textContent = `Coût/ha: ${coutHa.toFixed(2)} €`;
+                            }
+                        }
+                    }
+                } else if (type === 'melange') {
+                    const produitNom = input.dataset.produit;
+                    const calcul = calculsHistorique.find(c => c.id === id);
+                    if (calcul) {
+                        const produit = calcul.produits.find(p => p.nom === produitNom);
+                        if (produit) {
+                            produit.prixSac = newPrix;
+                            const coutHa = calculerCoutHa(calcul);
+                            const recapDiv = document.querySelector(`[data-recap-id="${id}"]`);
+                            if (recapDiv) {
+                                const coutElement = recapDiv.querySelector('.recap-cout');
+                                if (coutElement) {
+                                    coutElement.textContent = `Coût/ha: ${coutHa.toFixed(2)} €`;
+                                }
+                            }
+                        }
+                    }
+                }
+                afficherBesoinsProduits();
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        setupAutocomplete("produit-unique", "suggestions-unique");
+        document.getElementById('produit-unique').addEventListener('change', function() {
+            afficherInfoProduit(this, 'info-produit-unique');
+        });
+        setupAutocomplete("produit-melange-1", "suggestions-melange-1");
+        document.getElementById('produit-melange-1').addEventListener('change', function() {
+            afficherInfoProduit(this, 'info-produit-melange-1');
+        });
+    });
+
+    document.getElementById("ajouter-produit-melange").addEventListener("click", function () {
+        melangeProduitCount++;
+        const newMelangeDiv = document.createElement("div");
+        newMelangeDiv.className = "melange-produit";
+        newMelangeDiv.innerHTML = `
+            <div>
+                <label for="produit-melange-${melangeProduitCount}">Produit ${melangeProduitCount}:</label>
+                <div class="autocomplete-container">
+                    <input class="produit-melange" id="produit-melange-${melangeProduitCount}" data-index="${melangeProduitCount}" type="text" placeholder="Commencez à taper le nom d'un produit..." autocomplete="off" />
+                    <div id="suggestions-melange-${melangeProduitCount}" class="suggestions-list"></div>
+                </div>
+                <div id="info-produit-melange-${melangeProduitCount}" class="produit-info" style="display: none;">
+                    <div class="poids-sac-info">
+                        <div>Poids du sac:</div>
+                        <span class="poids-sac-melange"></span> kg
+                    </div>
+                    <div class="prix-sac">
+                        <div>Prix du sac:</div>
+                        <input type="number" class="prix-sac-melange" data-index="${melangeProduitCount}" min="0" step="0.01" placeholder="Prix €/sac"> €
+                    </div>
+                </div>
+            </div>
+            <div>
+                <label for="dose-melange-${melangeProduitCount}">Dose (kg/ha):</label>
+                <input type="number" class="dose-melange" id="dose-melange-${melangeProduitCount}" data-index="${melangeProduitCount}" min="0" step="0.1" value="0">
+            </div>
+            <div>
+                <button type="button" class="supprimer-produit modern-button" data-index="${melangeProduitCount}">Supprimer</button>
+            </div>
+        `;
+        document.getElementById("melange-container").appendChild(newMelangeDiv);
+        setupAutocomplete(`produit-melange-${melangeProduitCount}`, `suggestions-melange-${melangeProduitCount}`);
+        newMelangeDiv.querySelector('.produit-melange').addEventListener('change', function () {
+            afficherInfoProduit(this, `info-produit-melange-${melangeProduitCount}`);
+        });
+        newMelangeDiv.querySelector('.supprimer-produit').addEventListener('click', function () {
+            supprimerProduitMelange(melangeProduitCount);
+        });
+        actualiserNumerotationProduits();
+    });
+</script>
+</body>
+</html>
