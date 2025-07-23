@@ -1,4 +1,4 @@
-name: Deploy CFF PWA
+name: Deploy CF PWA
 on:
   push:
     branches: [main]
