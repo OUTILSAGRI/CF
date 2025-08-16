@@ -430,17 +430,14 @@ function calculerCoutHaMelange(calcul, produit) {
 }
 function calculerCoutHaMoyenneMelange(calcul) {
     let somme = 0;
-    let n = calcul.produits.length;
-    if (n === 0) return 0;
     calcul.produits.forEach(produit => {
         const produitInfo = dataProduits.find(p => p.nom === produit.nom);
         if (produitInfo && produitInfo.poidsSac > 0) {
             somme += (produit.prixSac * produit.dose) / produitInfo.poidsSac;
         }
     });
-    return somme / n;
+    return somme;
 }
-
 // --- Ajoute ou retire une intention, puis refresh ---
 function ajouterRecapitulatif(calcul) {
     calculsHistorique.push(calcul);
