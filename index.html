@@ -13,6 +13,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <style>
 :root {
     --vert-fonce: #365436;
@@ -21,7 +23,11 @@
     --gris-fond: #f4f7f5;
     --font-principale: 'Montserrat', Arial, sans-serif;
 }
-html { font-size: clamp(13px, 2.5vw, 17px); }
+html {
+    font-size: clamp(13px, 2.5vw, 17px);
+    min-height: 100%;
+    box-sizing: border-box;
+}
 body {
     font-family: var(--font-principale);
     background: var(--gris-fond);
@@ -30,47 +36,97 @@ body {
     padding: 0;
     min-width: 0;
     overflow-x: auto;
+    min-height: 100vh;
+    padding-bottom: 70px; /* Pour ne pas masquer le contenu par le menu fixe */
+    box-sizing: border-box;
 }
+/* MENU DE NAVIGATION EN BAS TYPE LEBONCOIN - RESPONSIVE */
 .main-nav {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100vw;
+    background: #fff;
+    box-shadow: 0 -2px 18px rgba(54,84,54,0.13);
+    z-index: 100;
     display: flex;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px 0 0 0;
+    justify-content: space-around;
+    align-items: center;
+    height: 62px;
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    font-size: 1.12em;
+    transition: height 0.2s;
 }
+
 .main-nav a {
+    flex: 1;
     text-decoration: none;
-    padding: 8px 18px;
-    border-radius: 7px;
+    padding: 8px 0;
+    border-radius: 12px;
     font-weight: bold;
     color: #365436;
     background: none;
     transition: background 0.2s, color 0.2s;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    font-size: inherit;
+    min-width: 0;
 }
+
 .main-nav a.active, .main-nav a:hover {
-    background: #b6e5a6;
-    color: #365436;
+    background: #e7fbe2;
+    color: var(--vert-clair);
 }
 .main-nav a i {
-    font-size: 1.25em;
-    vertical-align: middle;
-    margin-right: 2px;
+    font-size: 1.45em;
+    margin-bottom: 1px;
 }
 .main-nav a[title="Besoins & Coûts"] i {
     margin-right: 0;
     margin-left: 2px;
 }
-/* CORRECTION : suppression de la règle globale .logo-header polluante
-.logo-header {
-    width: 85px;
-    max-width: 32vw;
-    display: block;
-    margin: 0 auto;
+
+@media (max-width: 600px) {
+    html { font-size: 15px; }
+    .main-nav {
+        height: 54px;
+        font-size: 1em;
+        border-radius: 16px 16px 0 0;
+    }
+    .main-nav a i {
+        font-size: 1.25em;
+    }
+    body {
+        padding-bottom: 62px;
+    }
 }
-*/
-/* Ajout du style moderne et spécifique pour le header */
+@media (max-width: 400px) {
+    html { font-size: 13px; }
+    .main-nav {
+        height: 48px;
+        font-size: 0.95em;
+        border-radius: 12px 12px 0 0;
+    }
+    body {
+        padding-bottom: 54px;
+    }
+}
+@media (max-width: 350px) {
+    html { font-size: 12px; }
+    .main-nav {
+        height: 42px;
+        font-size: 0.90em;
+        border-radius: 9px 9px 0 0;
+    }
+    body {
+        padding-bottom: 48px;
+    }
+}
+
+/* HEADER */
 .header-box {
     background: #fff;
     border-radius: 16px;
@@ -84,23 +140,20 @@ body {
     flex-direction: column;
     align-items: center;
 }
-
 .header-box .logo-header {
     width: 82px;
     max-width: 25vw;
     margin-bottom: 10px;
 }
-
 .header-box .titre-principal {
     font-size: 1.15rem;
-    color: var(--vert-fonce); /* ici, même vert que "Calcul avec un seul produit" */
+    color: var(--vert-fonce);
     font-weight: 700;
     font-family: 'Montserrat', Arial, sans-serif;
     letter-spacing: 1.5px;
     text-transform: uppercase;
     margin: 0;
 }
-
 @media (max-width: 600px) {
     .header-box {
         max-width: 98vw;
@@ -113,6 +166,8 @@ body {
         font-size: 0.93rem;
     }
 }
+
+/* TITRES */
 h1 {
     background: linear-gradient(90deg, var(--vert-fonce) 70%, var(--vert-clair) 100%);
     color: white;
@@ -141,6 +196,8 @@ h2 {
     text-transform: uppercase;
     margin-top: 0;
 }
+
+/* CONTAINERS */
 .container,
 #recapitulatif-semis,
 #besoins-produits,
@@ -154,6 +211,58 @@ h2 {
     width: 98vw;
     box-sizing: border-box;
 }
+@media (max-width: 600px) {
+    .container,
+    #recapitulatif-semis,
+    #besoins-produits,
+    #cout-total {
+        max-width: 99vw;
+        border-radius: 7px;
+        padding: 4vw 2vw;
+        margin: 2vw auto 2vw;
+    }
+    h1 {
+        font-size: 1.1rem;
+        padding: 3vw 0 2vw 0;
+    }
+    h2 {
+        font-size: 0.97rem;
+        padding-left: 2vw;
+    }
+    .prix-modifiable { width: 52px; }
+    .melange-produit {
+        margin-bottom: 10px;
+        padding-bottom: 4px;
+    }
+    .form-controls {
+        gap: 8px;
+    }
+    .remise-container {
+        max-width: 95vw;
+    }
+    .main-nav a i {
+        font-size: 1.1em;
+    }
+}
+@media (max-width: 400px) {
+    h1, h2 {
+        font-size: 1rem;
+    }
+    .container,
+    #recapitulatif-semis,
+    #besoins-produits,
+    #cout-total {
+        padding: 2vw 1vw;
+    }
+}
+@media (max-width: 350px) {
+    button.modern-button {
+        padding: 7px 0;
+        font-size: 0.88em;
+    }
+}
+
+/* FORMULAIRES ET INPUTS */
 .form-controls {
     display: flex;
     flex-direction: column;
@@ -317,6 +426,7 @@ input[type=number] {
 input, button {
     touch-action: manipulation;
 }
+
 /* REMISE STYLE */
 .remise-container {
     display: flex;
@@ -353,56 +463,8 @@ input, button {
 .remise-container input[type="number"]:focus {
     border-color: var(--orange);
 }
-@media (max-width: 600px) {
-    .container,
-    #recapitulatif-semis,
-    #besoins-produits,
-    #cout-total {
-        max-width: 99vw;
-        border-radius: 7px;
-        padding: 4vw 2vw;
-        margin: 2vw auto 2vw;
-    }
-    h1 {
-        font-size: 1.1rem;
-        padding: 3vw 0 2vw 0;
-    }
-    h2 {
-        font-size: 0.97rem;
-        padding-left: 2vw;
-    }
-    .prix-modifiable { width: 52px; }
-    .melange-produit {
-        margin-bottom: 10px;
-        padding-bottom: 4px;
-    }
-    .form-controls {
-        gap: 8px;
-    }
-    .remise-container {
-        max-width: 95vw;
-    }
-    .main-nav a i {
-        font-size: 1.1em;
-    }
-}
-@media (max-width: 400px) {
-    h1, h2 {
-        font-size: 1rem;
-    }
-    .container,
-    #recapitulatif-semis,
-    #besoins-produits,
-    #cout-total {
-        padding: 2vw 1vw;
-    }
-}
-@media (max-width: 350px) {
-    button.modern-button {
-        padding: 7px 0;
-        font-size: 0.88em;
-    }
-}
+
+/* SELECT PERSONNALISÉ */
 #tc-select {
     width: 100%;
     max-width: 260px;
@@ -411,7 +473,7 @@ input, button {
     border-radius: 5px;
     font-size: clamp(0.99em, 1.8vw, 1.08em);
     font-family: var(--font-principale);
-    background: #f7fff6 url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 6L8 10L12 6' stroke='%236fae4e' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 12px center/18px 18px;
+    background: #f7fff6 url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 6L8 10L12 6' stroke='%236fae4e' stroke-[...]
     margin-bottom: 6px;
     transition: border-color 0.2s;
     box-sizing: border-box;
@@ -434,12 +496,52 @@ input, button {
 #tc-select::-ms-expand {
     display: none;
 }
+html, body {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+    overflow-x: hidden !important;
+}
+
+/* Blocs principaux, titres et navigation : largeur extensible */
+.container,
+#recapitulatif-semis,
+#besoins-produits,
+#cout-total,
+.header-box,
+.remise-container,
+.main-nav,
+h1, h2,
+.recap-table-container,
+.recap-row,
+.recap-produit, .recap-melange, .recap-surface, .recap-cout,
+.recap-buttons,
+.table-input,
+.recap-table,
+.recap-section-title {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+/* Les éléments restent centrés dans leur bloc grâce à align-items/justify-content ou margin: auto */
+@media print {
+  #recapitulatif-semis, #besoins-produits, #cout-total, .container {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
 </style>
 </head>
 <body>
     <div class="header-box">
-        <img src="logo-agricentre-dumas-3.png" alt="Agricentre Dumas" class="logo-header"/>
-        <span class="titre-principal">Calculateur de Besoins en Semences</span>
+    <img src="logo-agricentre-dumas-3.png" alt="Agricentre Dumas" class="logo-header">
+    <span class="titre-principal">Calculateur de Besoins en Semences</span>
     </div>
 <nav class="main-nav">
     <a href="#" id="nav-calcul" class="active" title="Calcul">
@@ -452,6 +554,9 @@ input, button {
         <i class="fa-solid fa-seedling"></i>
         <i class="fa-solid fa-euro-sign"></i>
     </a>
+    <a href="#" id="nav-impression" title="Impression PDF">
+    <i class="fa-solid fa-file-pdf"></i>
+</a>
 </nav>
 <!-- SECTION 1 : CALCUL -->
 <section id="section-calcul">
@@ -603,6 +708,34 @@ input, button {
     <div id="cout-total">
         <h2>Coût Total</h2>
         <div id="cout-content"></div>
+    </div>
+</section>
+
+<!-- SECTION 4 : Impression -->
+<section id="section-impression" style="display:none;">
+    <div class="container">
+        <h2>Impression personnalisée</h2>
+        <form id="form-impression">
+            <div>
+                <label>
+                    <input type="checkbox" name="recap" checked>
+                    Récapitulatif des intentions de semis
+                </label>
+            </div>
+            <div>
+                <label>
+                    <input type="checkbox" name="besoins" checked>
+                    Besoin en produit
+                </label>
+            </div>
+            <div>
+                <label>
+                    <input type="checkbox" name="cout" checked>
+                    Coût total
+                </label>
+            </div>
+            <button id="creer-pdf" class="modern-button">Créer le PDF</button>
+        </form>
     </div>
 </section>
 

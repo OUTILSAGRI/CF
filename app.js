@@ -1,16 +1,20 @@
 // --- Navigation SPA ---
 function showSection(section) {
-    document.getElementById('section-calcul').style.display = (section === 'calcul') ? '' : 'none';
-    document.getElementById('section-recap').style.display = (section === 'recap') ? '' : 'none';
-    document.getElementById('section-besoins').style.display = (section === 'besoins') ? '' : 'none';
+    document.getElementById('section-calcul').style.display      = (section === 'calcul')      ? '' : 'none';
+    document.getElementById('section-recap').style.display       = (section === 'recap')       ? '' : 'none';
+    document.getElementById('section-besoins').style.display     = (section === 'besoins')     ? '' : 'none';
+    document.getElementById('section-impression').style.display  = (section === 'impression')  ? '' : 'none';
+
     document.getElementById('nav-calcul').classList.toggle('active', section === 'calcul');
     document.getElementById('nav-recap').classList.toggle('active', section === 'recap');
     document.getElementById('nav-besoins').classList.toggle('active', section === 'besoins');
+    document.getElementById('nav-impression').classList.toggle('active', section === 'impression');
     if(section === 'calcul') setTimeout(initAllAutocompletes,0);
 }
-document.getElementById('nav-calcul').onclick = function(e){e.preventDefault(); showSection('calcul');};
-document.getElementById('nav-recap').onclick = function(e){e.preventDefault(); showSection('recap');};
-document.getElementById('nav-besoins').onclick = function(e){e.preventDefault(); showSection('besoins');};
+document.getElementById('nav-calcul').onclick     = function(e){e.preventDefault(); showSection('calcul');};
+document.getElementById('nav-recap').onclick      = function(e){e.preventDefault(); showSection('recap');};
+document.getElementById('nav-besoins').onclick    = function(e){e.preventDefault(); showSection('besoins');};
+document.getElementById('nav-impression').onclick = function(e){e.preventDefault(); showSection('impression');};
 showSection('calcul');
 
 // --- Données produits ---
@@ -438,6 +442,7 @@ function calculerCoutHaMoyenneMelange(calcul) {
     });
     return somme;
 }
+
 // --- Ajoute ou retire une intention, puis refresh ---
 function ajouterRecapitulatif(calcul) {
     calculsHistorique.push(calcul);
@@ -541,14 +546,24 @@ function afficherBesoinsProduits() {
     let montantRemise = totalGeneral * remisePct / 100;
     let totalAvecRemise = totalGeneral - montantRemise;
 
-    coutContent.innerHTML = `
-        <div class="total-row">
-            <strong>Coût Total Estimé (par sacs complets):</strong> 
-            <span style="text-decoration:${remisePct>0?'line-through':'none'}">${Math.round(totalGeneral)} €</span>
-            ${remisePct>0 ? `<span style="color:green;font-weight:bold;font-size:1.05em;"> ${Math.round(totalAvecRemise)} €</span>
-            <span style="color:green;">(-${Math.round(montantRemise)} €, Remise ${remisePct}%)</span>` : ""}
-        </div>
-    `;
+    // Affichage du coût total selon remise
+    if (remisePct > 0) {
+        coutContent.innerHTML = `
+            <div class="total-row">
+                <strong>Coût Total Estimé (par sacs complets):</strong> 
+                <span style="text-decoration:line-through">${Math.round(totalGeneral)} €</span>
+                <span style="color:green;font-weight:bold;font-size:1.05em;"> ${Math.round(totalAvecRemise)} €</span>
+                <span style="color:green;">(-${Math.round(montantRemise)} €, Remise ${remisePct}%)</span>
+            </div>
+        `;
+    } else {
+        coutContent.innerHTML = `
+            <div class="total-row">
+                <strong>Coût Total Estimé (par sacs complets):</strong> 
+                <span>${Math.round(totalGeneral)} €</span>
+            </div>
+        `;
+    }
 }
 // --- Calcul coût/ha ---
 function calculerCoutHa(calcul) {
@@ -635,3 +650,136 @@ function reinitialiserRecapitulatif() {
     document.getElementById('besoins-content').innerHTML = '';
     document.getElementById('cout-content').innerHTML = '';
 }
+
+// Navigation : affiche la page impression
+document.getElementById('nav-impression').addEventListener('click', function(e) {
+    e.preventDefault();
+    // Masquer les autres sections
+    document.getElementById('section-calcul').style.display = 'none';
+    document.getElementById('section-recap').style.display = 'none';
+    document.getElementById('section-besoins').style.display = 'none';
+    document.getElementById('section-impression').style.display = '';
+    // Activer le bouton de navigation
+    document.querySelectorAll('.main-nav a').forEach(a => a.classList.remove('active'));
+    this.classList.add('active');
+});
+
+// --- Impression PDF avec découpage multi-page des captures d'écran ---
+document.getElementById('creer-pdf').addEventListener('click', function(e) {
+    e.preventDefault();
+
+    const form = document.getElementById('form-impression');
+    const recapChecked    = form.querySelector('input[name="recap"]').checked;
+    const besoinsChecked  = form.querySelector('input[name="besoins"]').checked;
+    const coutChecked     = form.querySelector('input[name="cout"]').checked;
+
+    // Collecte des sections à capturer
+    const captures = [];
+    if (recapChecked) {
+        const recapEl = document.querySelector('#recapitulatif-semis') || document.getElementById('section-recap');
+        if (recapEl) captures.push(recapEl);
+    }
+    if (besoinsChecked) {
+        const besoinsEl = document.getElementById('besoins-produits');
+        if (besoinsEl) captures.push(besoinsEl);
+    }
+    if (coutChecked) {
+        const coutEl = document.getElementById('cout-total');
+        if (coutEl) captures.push(coutEl);
+    }
+
+    if (captures.length === 0) {
+        alert("Sélectionnez au moins une section à imprimer.");
+        return;
+    }
+
+    // Affiche temporairement les sections parentes masquées
+    const shownTemporarily = [];
+    function showIfHidden(el) {
+        if (!el) return;
+        const cs = window.getComputedStyle(el);
+        if (cs.display === 'none') {
+            shownTemporarily.push(el);
+            el.style.display = '';
+        }
+    }
+    showIfHidden(document.getElementById('section-recap'));
+    showIfHidden(document.getElementById('section-besoins'));
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+    let isFirstPage = true;
+
+    // Fonction pour capturer et ajouter
+    function captureAndAdd(el, done) {
+        // Sauvegarde style original
+        const original = {
+            width: el.style.width,
+            maxWidth: el.style.maxWidth,
+            marginLeft: el.style.marginLeft,
+            marginRight: el.style.marginRight
+        };
+        // Force largeur plein écran
+        el.style.width = '100vw';
+        el.style.maxWidth = '100vw';
+        el.style.marginLeft = '0';
+        el.style.marginRight = '0';
+
+        setTimeout(function(){
+            html2canvas(el, {
+                scale: 2,
+                useCORS: true,
+                windowWidth: el.scrollWidth,
+                windowHeight: el.scrollHeight
+            }).then(function(canvas){
+                // Restaure style
+                el.style.width = original.width;
+                el.style.maxWidth = original.maxWidth;
+                el.style.marginLeft = original.marginLeft;
+                el.style.marginRight = original.marginRight;
+
+                // Multi-pages
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                const marginX = 10, marginY = 10;
+                const imgWidth = pdfWidth - marginX * 2;
+                const availableHeight = pdfHeight - marginY * 2;
+
+                let y = 0;
+                while (y < canvas.height) {
+                    if (!isFirstPage) pdf.addPage();
+                    isFirstPage = false;
+
+                    const sHeight = Math.min(canvas.height - y, canvas.width * availableHeight / imgWidth);
+                    const pageCanvas = document.createElement('canvas');
+                    pageCanvas.width = canvas.width;
+                    pageCanvas.height = sHeight;
+                    const ctx = pageCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, y, canvas.width, sHeight, 0, 0, canvas.width, sHeight);
+                    const imgData = pageCanvas.toDataURL('image/png');
+                    const drawHeight = imgWidth * sHeight / canvas.width;
+
+                    pdf.addImage(imgData, 'PNG', marginX, marginY, imgWidth, drawHeight);
+                    y += sHeight;
+                }
+                done();
+            });
+        }, 100);
+    }
+
+    // Enchaînement séquentiel (pas async !)
+    let idx = 0;
+    function nextCapture() {
+        if (idx < captures.length) {
+            captureAndAdd(captures[idx], function() {
+                idx++;
+                nextCapture();
+            });
+        } else {
+            // Remasque les sections
+            shownTemporarily.forEach(function(el){ el.style.display = 'none'; });
+            pdf.save('besoins-prairies.pdf');
+        }
+    }
+    nextCapture();
+});
